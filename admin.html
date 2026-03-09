@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - TechStore</title>
+    <link rel="stylesheet" href="tienda.css">
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="blob-c bg-shape1"></div>
+    <div class="blob-c bg-shape2"></div>
+    
+    <nav class="navbar glass">
+        <div class="logo">
+            <i class="fa-solid fa-microchip"></i>
+            <span>TechStore <span class="admin-badge">ADMIN</span></span>
+        </div>
+        <div class="nav-actions">
+            <a href="tienda.html" class="logout-btn"><i class="fa-solid fa-store"></i> Volver a Tienda</a>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <aside class="admin-sidebar glass">
+            <ul id="adminSidebarNav">
+                <li class="active" data-target="section-inventory"><i class="fa-solid fa-box"></i> Inventario</li>
+                <li data-target="section-stats"><i class="fa-solid fa-chart-line"></i> Estadísticas</li>
+                <li data-target="section-users"><i class="fa-solid fa-users-cog"></i> Usuarios</li>
+                <li data-target="section-settings"><i class="fa-solid fa-gear"></i> Configuración</li>
+            </ul>
+        </aside>
+
+        <main class="admin-main">
+            <!-- SECCIÓN: INVENTARIO -->
+            <section id="section-inventory" class="admin-section active">
+                <header class="admin-header">
+                    <h2>Gestión de Productos</h2>
+                    <button class="add-new-btn" id="openAddModalBtn"><i class="fa-solid fa-plus"></i> Nuevo Producto</button>
+                </header>
+
+                <div class="products-table-container glass">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>Imagen</th>
+                                <th>Nombre</th>
+                                <th>Precio</th>
+                                <th>Etiquetas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminProductsList">
+                            <!-- Generado por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: ESTADÍSTICAS -->
+            <section id="section-stats" class="admin-section">
+                <header class="admin-header">
+                    <h2>Estadísticas de la Tienda</h2>
+                </header>
+                <div class="stats-grid">
+                    <div class="stat-card glass">
+                        <div class="stat-icon" style="color: #3b82f6; background: rgba(59,130,246,0.1);"><i class="fa-solid fa-dollar-sign"></i></div>
+                        <div class="stat-info">
+                            <h3>Ventas del Mes</h3>
+                            <p class="stat-value">$24,590.00</p>
+                            <span class="stat-trend positive"><i class="fa-solid fa-arrow-trend-up"></i> +12.5%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-icon" style="color: #10b981; background: rgba(16,185,129,0.1);"><i class="fa-solid fa-cart-shopping"></i></div>
+                        <div class="stat-info">
+                            <h3>Órdenes</h3>
+                            <p class="stat-value">342</p>
+                            <span class="stat-trend positive"><i class="fa-solid fa-arrow-trend-up"></i> +5.2%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-icon" style="color: #8b5cf6; background: rgba(139,92,246,0.1);"><i class="fa-solid fa-eye"></i></div>
+                        <div class="stat-info">
+                            <h3>Visitas</h3>
+                            <p class="stat-value">12,845</p>
+                            <span class="stat-trend negative"><i class="fa-solid fa-arrow-trend-down"></i> -1.4%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-icon" style="color: #f59e0b; background: rgba(245,158,11,0.1);"><i class="fa-solid fa-user-check"></i></div>
+                        <div class="stat-info">
+                            <h3>Conversión</h3>
+                            <p class="stat-value">2.6%</p>
+                            <span class="stat-trend positive"><i class="fa-solid fa-arrow-trend-up"></i> +0.8%</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: USUARIOS -->
+            <section id="section-users" class="admin-section">
+                <header class="admin-header">
+                    <h2>Gestión de Usuarios</h2>
+                    <button class="add-new-btn" id="openAddUserBtn"><i class="fa-solid fa-user-plus"></i> Invitar Usuario</button>
+                </header>
+                <div class="products-table-container glass">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>Usuario / Correo</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th>Último Acceso</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersList">
+                            <!-- JS Populated Users -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: CONFIGURACIÓN -->
+            <section id="section-settings" class="admin-section">
+                <header class="admin-header">
+                    <h2>Configuración Global</h2>
+                </header>
+                <div class="settings-grid">
+                    <div class="settings-card glass">
+                        <h3><i class="fa-solid fa-store"></i> Información de la Tienda</h3>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label>Nombre de la Tienda</label>
+                            <input type="text" value="TechStore Oficial" class="settings-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Moneda Principal</label>
+                            <select class="settings-input">
+                                <option value="USD" selected>Dólar Estadounidense (USD)</option>
+                                <option value="EUR">Euro (EUR)</option>
+                                <option value="MXN">Peso Mexicano (MXN)</option>
+                            </select>
+                        </div>
+                        <button class="save-settings-btn">Guardar Información</button>
+                    </div>
+
+                    <div class="settings-card glass">
+                        <h3><i class="fa-solid fa-credit-card"></i> Pagos y Checkout</h3>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label>Impuesto Estándar (%)</label>
+                            <input type="number" value="16" class="settings-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Pasarela Activa</label>
+                            <select class="settings-input">
+                                <option value="stripe" selected>Stripe (Simulado)</option>
+                                <option value="paypal">PayPal</option>
+                            </select>
+                        </div>
+                        <button class="save-settings-btn">Guardar Pagos</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal para Agregar/Editar Producto -->
+    <div class="admin-modal-overlay" id="productModalOverlay">
+        <div class="admin-modal glass">
+            <div class="modal-header">
+                <h3>Añadir Nuevo Producto</h3>
+                <button class="close-modal" id="closeProductModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="productForm" class="product-form">
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Nombre del Producto</label>
+                        <input type="text" id="prodName" required placeholder="Ej: Teclado Inalámbrico">
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Precio Final (Ej: $99.00)</label>
+                        <input type="text" id="prodPrice" required placeholder="$0.00">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Precio Antiguo (Opcional)</label>
+                        <input type="text" id="prodOldPrice" placeholder="$0.00">
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Imagen del Producto</label>
+                        <input type="file" id="prodImage" accept="image/png, image/jpeg, image/webp" class="file-input">
+                        <small class="file-help">Elige un archivo de imagen. Se mostrará en la tienda.</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Estilo Etiqueta (Opcional)</label>
+                        <select id="prodTagClass">
+                            <option value="">Ninguna</option>
+                            <option value="new">Nuevo (Verde)</option>
+                            <option value="discount">Descuento (Rojo)</option>
+                            <option value="hot">Hot (Naranja)</option>
+                        </select>
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Texto Etiqueta (Ej: -20%)</label>
+                        <input type="text" id="prodTagText" placeholder="-20%">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción y Especificaciones</label>
+                    <textarea id="prodDesc" rows="3" required placeholder="Describe las características principales del producto..."></textarea>
+                </div>
+
+                <!-- Preview oculto de la imagen subida -->
+                <input type="hidden" id="prodImgBase64" value="https://images.unsplash.com/photo-1546252923-d34e9e04bbde?auto=format&fit=crop&w=400&q=80">
+
+                <button type="submit" class="save-prod-btn">Guardar Producto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin User Modal -->
+    <div class="admin-modal-overlay" id="userModalOverlay">
+        <div class="admin-modal glass" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>Invitar Nuevo Usuario</h3>
+                <button class="close-modal" id="closeUserModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="adminUserForm" class="product-form" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="newUserName" required placeholder="Ej: Juan Pérez">
+                </div>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Correo Electrónico / Usuario</label>
+                    <input type="text" id="newUserEmail" required placeholder="ejemplo@techstore.com">
+                </div>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Contraseña Provisional</label>
+                    <input type="password" id="newUserPassword" required placeholder="Mínimo 5 caracteres">
+                </div>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Rol del Usuario</label>
+                    <select id="newUserRole" class="settings-input" required>
+                        <option value="user" selected>Cliente / Usuario (Sólo lectura y compras)</option>
+                        <option value="admin">Administrador (Acceso total al panel)</option>
+                    </select>
+                </div>
+                <button type="submit" class="save-prod-btn" style="margin-top: 25px;">Crear Usuario</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tostada Administración -->
+    <div id="adminToast" class="toast">¡Acción realizada con éxito!</div>
+
+    <script src="admin_auth.js"></script>
+    <script src="admin_ui.js"></script>
+    <script src="admin_inventory.js"></script>
+    <script src="admin_users.js"></script>
+</body>
+</html>

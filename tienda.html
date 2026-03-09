@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechStore - Novedades y Catálogo</title>
+    <link rel="stylesheet" href="tienda.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="blob-c bg-shape1"></div>
+    <div class="blob-c bg-shape2"></div>
+
+    <nav class="navbar glass">
+        <div class="logo">
+            <i class="fa-solid fa-microchip"></i>
+            <span>TechStore</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" class="active">Inicio</a></li>
+            <li><a href="#productos">Productos</a></li>
+            <li><a href="#nosotros">Nosotros</a></li>
+        </ul>
+        <div class="nav-actions">
+            <button class="cart-btn">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="badge" id="cart-count">0</span>
+            </button>
+            <a href="admin.html" class="logout-btn" id="adminLinkBtn" style="display: none;"><i
+                    class="fa-solid fa-user-tie"></i> Admin</a>
+            <button id="logoutBtn" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                Salir</button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1 class="gradient-text">El Futuro en Tus Manos</h1>
+            <p>Descubre lo último en tecnología con descuentos exclusivos. Eleva tu setup y mejora tu productividad con
+                el mejor rendimiento y diseños vanguardistas.</p>
+            <button class="cta-btn"
+                onclick="document.getElementById('productos').scrollIntoView({behavior:'smooth'})">Explorar Catálogo <i
+                    class="fa-solid fa-arrow-right"></i></button>
+        </div>
+        <div class="hero-image">
+            <img src="logo_web.png" alt="Tech setup">
+        </div>
+    </header>
+
+    <main id="productos" class="products-section">
+        <h2>Nuestro Catálogo Comercial</h2>
+        <div class="products-grid" id="products-container">
+            <!-- Los productos se inyectarán de forma dinámica mediante tienda.js -->
+        </div>
+    </main>
+
+    <section id="nosotros" class="about-section glass">
+        <div class="about-content">
+            <h2>Acerca de TechStore</h2>
+            <div class="about-text">
+                <p>En <strong>TechStore</strong>, nuestra misión institucional trasciende la comercialización de
+                    equipos; buscamos democratizar el acceso a la tecnología de vanguardia. Proveemos a nuestros
+                    clientes no solo de hardware excepcional, sino de las herramientas fundamentales que potencian su
+                    productividad diaria, su creatividad y su estilo de vida.</p>
+                <p>Fundada bajo la premisa irrenunciable de la excelencia y el compromiso por la calidad, llevamos más
+                    de una década consolidándonos como un referente indiscutible en la distribución de equipos
+                    informáticos, dispositivos móviles y periféricos de grado profesional y corporativo.</p>
+                <p>Nuestra visión hacia el futuro se cimienta en continuar expandiendo nuestras fronteras tecnológicas y
+                    comerciales, garantizando un servicio de atención integral y un catálogo constantemente actualizado
+                    que logre responder de forma anticipada a las crecientes exigencias de un entorno digital
+                    globalizado y en constante evolución.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="glass footer">
+        <p>&copy; 2026 TechStore Institucional. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Cart Drawer Modal -->
+    <div class="cart-overlay" id="cartOverlay"></div>
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <h2>Tu Carrito</h2>
+            <button class="close-btn" id="closeCartBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="cart-items" id="cartItemsContainer">
+            <!-- Items rendered by JS -->
+            <div class="empty-cart-msg">Tu carrito está vacío</div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotalAmount">$0.00</span>
+            </div>
+            <button class="checkout-btn" id="openCheckoutBtn" disabled>Proceder al Pago <i
+                    class="fa-solid fa-lock"></i></button>
+        </div>
+    </div>
+
+    <!-- Modal Cambio de Contraseña Obligatorio -->
+    <div class="checkout-overlay" id="forcePasswordModal">
+        <div class="checkout-modal glass" style="max-width: 400px;">
+            <div class="checkout-header">
+                <div class="checkout-logo"><i class="fa-solid fa-shield-halved"></i> Seguridad</div>
+            </div>
+            <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;">Por seguridad de tu tienda, debes
+                cambiar la contraseña por defecto del administrador antes de continuar.</p>
+            <form id="forcePasswordForm" class="checkout-form">
+                <div class="form-group">
+                    <label>Nueva Contraseña</label>
+                    <input type="password" id="newAdminPassword" required
+                        placeholder="Ingresa una nueva contraseña segura">
+                </div>
+                <button type="submit" class="pay-submit-btn">Actualizar Contraseña</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Simulated Stripe Checkout Modal -->
+    <div class="checkout-overlay" id="checkoutOverlay">
+        <div class="checkout-modal glass">
+            <div class="checkout-header">
+                <div class="checkout-logo"><i class="fa-solid fa-microchip"></i> TechStore</div>
+                <div class="pago-seguro"><i class="fa-solid fa-shield-halved"></i> Pago Seguro</div>
+            </div>
+            <div class="checkout-amount">
+                <span class="currency">USD</span>
+                <span class="amount" id="checkoutTotalAmount">$0.00</span>
+            </div>
+            <form id="checkoutForm" class="checkout-form">
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" required placeholder="tu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Información de la Tarjeta</label>
+                    <div class="card-input-wrapper">
+                        <i class="fa-regular fa-credit-card card-icon"></i>
+                        <input type="text" required placeholder="0000 0000 0000 0000" maxlength="19"
+                            class="card-number">
+                        <input type="text" required placeholder="MM/AA" maxlength="5" class="card-expiry">
+                        <input type="text" required placeholder="CVC" maxlength="3" class="card-cvc">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Nombre en la Tarjeta</label>
+                    <input type="text" required placeholder="Nombre completo">
+                </div>
+                <button type="submit" class="pay-submit-btn" id="paySubmitBtn">
+                    <span class="pay-text">Pagar <span id="payBtnAmount">$0.00</span></span>
+                    <div class="pay-loader hidden"></div>
+                </button>
+            </form>
+            <div class="checkout-brands">
+                <i class="fa-brands fa-cc-visa"></i>
+                <i class="fa-brands fa-cc-mastercard"></i>
+                <i class="fa-brands fa-cc-amex"></i>
+                <i class="fa-brands fa-cc-discover"></i>
+            </div>
+            <button class="close-checkout" id="closeCheckoutBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
+    <!-- Notificación tostada -->
+    <div id="toast" class="toast">¡Producto añadido con éxito al carrito!</div>
+
+    <script src="tienda.js"></script>
+</body>
+
+</html>
