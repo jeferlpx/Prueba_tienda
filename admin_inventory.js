@@ -1,7 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Obtener los productos y configuración
-    let productos = JSON.parse(localStorage.getItem('techstore_products')) || [];
-    
     // UI Elements
     const adminProductsList = document.getElementById('adminProductsList');
     const productModalOverlay = document.getElementById('productModalOverlay');
@@ -13,9 +10,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const base64Input = document.getElementById('prodImgBase64');
     
     // Variables de Estado
-    let editingIndex = null;
+    let productos = [];
+    let editingId = null; // En Firebase usamos el ID del documento, no el index del array
     const modalTitle = document.querySelector('#productModalOverlay h3');
     const submitBtn = document.querySelector('.save-prod-btn');
+
+    // 1. Cargar productos desde Firestore en Tiempo Real
+    db.collection('products').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+        productos = [];
+        snapshot.forEach(doc => {
+            productos.push({ id: doc.id, ...doc.data() });
+        });
+        renderAdminTable();
+    }, (error) => {
+        console.error("Error cargando inventario Admin", error);
+        window.showAdminToast('<i class="fa-solid fa-triangle-exclamation"></i>', 'Error de conexión a DB.');
+    });
 
     // 2. Renderizar tabla de productos
     const renderAdminTable = () => {
@@ -23,11 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
         adminProductsList.innerHTML = '';
         
         if (productos.length === 0) {
-            adminProductsList.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px;">No hay productos en el inventario.</td></tr>';
+            adminProductsList.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px;">Cargando inventario o vacío.</td></tr>';
             return;
         }
 
-        productos.forEach((prod, idx) => {
+        productos.forEach((prod) => {
             const tagSpan = prod.tagClase && prod.tagTexto ? 
                 `<span class="tag ${prod.tagClase}">${prod.tagTexto}</span>` : '-';
                 
@@ -38,16 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="prod-tb-price">${prod.precio}</td>
                 <td>${tagSpan}</td>
                 <td>
-                    <button class="action-btn edit" data-index="${idx}" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                    <button class="action-btn delete" data-index="${idx}" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                    <button class="action-btn edit" data-id="${prod.id}" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                    <button class="action-btn delete" data-id="${prod.id}" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                 </td>
             `;
             adminProductsList.appendChild(tr);
         });
     };
-
-    // Inicializar visualización de tabla
-    renderAdminTable();
 
     // 3. Convertir Imagen a Base64
     if (fileInput) {
@@ -71,11 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModal = () => {
         productModalOverlay.classList.remove('show');
         productForm.reset();
-        // Reset base64 hidden al valor por defecto
         base64Input.value = 'https://images.unsplash.com/photo-1546252923-d34e9e04bbde?auto=format&fit=crop&w=400&q=80';
-        
-        // Resetear estado de edición
-        editingIndex = null;
+        editingId = null;
         if(modalTitle) modalTitle.textContent = 'Añadir Nuevo Producto';
         if(submitBtn) submitBtn.textContent = 'Guardar Producto';
     };
@@ -83,9 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if(openAddModalBtn) openAddModalBtn.addEventListener('click', openModal);
     if(closeProductModal) closeProductModal.addEventListener('click', closeModal);
 
-    // 5. Agregar / Editar Producto
+    // 5. Agregar / Editar Producto en Firestore
     if (productForm) {
-        productForm.addEventListener('submit', (e) => {
+        productForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const nombre = document.getElementById('prodName').value;
@@ -96,42 +100,55 @@ document.addEventListener('DOMContentLoaded', () => {
             const tagTexto = document.getElementById('prodTagText').value;
             const desc = document.getElementById('prodDesc').value;
 
-            const nuevoProducto = { nombre, desc, precio, precioAntiguo, img, tagClase, tagTexto };
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Procesando...";
 
-            if (editingIndex !== null) {
-                productos[editingIndex] = nuevoProducto;
-                window.showAdminToast('<i class="fa-solid fa-check-circle"></i>', 'Producto actualizado con éxito.');
-            } else {
-                productos.unshift(nuevoProducto);
-                window.showAdminToast('<i class="fa-solid fa-check-circle"></i>', 'Producto añadido con éxito.');
+            try {
+                if (editingId) {
+                    await db.collection('products').doc(editingId).update({
+                        nombre, desc, precio, precioAntiguo, img, tagClase, tagTexto,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    window.showAdminToast('<i class="fa-solid fa-check-circle"></i>', 'Producto actualizado en la nube.');
+                } else {
+                    await db.collection('products').add({
+                        nombre, desc, precio, precioAntiguo, img, tagClase, tagTexto,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    window.showAdminToast('<i class="fa-solid fa-cloud-arrow-up"></i>', 'Producto sincronizado a la nube.');
+                }
+                closeModal();
+            } catch (error) {
+                console.error("Error guardando producto", error);
+                alert("Hubo un error al guardar. Verifica tu conexión.");
+            } finally {
+                submitBtn.disabled = false;
             }
-            
-            localStorage.setItem('techstore_products', JSON.stringify(productos));
-            renderAdminTable();
-            closeModal();
         });
     }
 
-    // 6. Acciones en la Tabla (Editar / Eliminar)
+    // 6. Acciones en la Tabla (Editar / Eliminar) de Firestore
     if (adminProductsList) {
-        adminProductsList.addEventListener('click', (e) => {
+        adminProductsList.addEventListener('click', async (e) => {
             const delBtn = e.target.closest('.delete');
             const editBtn = e.target.closest('.edit');
             
             if (delBtn) {
-                const idx = delBtn.getAttribute('data-index');
-                if(confirm("¿Estás seguro de que quieres eliminar este producto del inventario?")) {
-                    productos.splice(idx, 1);
-                    localStorage.setItem('techstore_products', JSON.stringify(productos));
-                    renderAdminTable();
-                    window.showAdminToast('<i class="fa-solid fa-trash-can"></i>', 'Producto eliminado.');
+                const id = delBtn.getAttribute('data-id');
+                if(confirm("¿Seguro que quieres borrar este producto globalmente?")) {
+                    try {
+                        await db.collection('products').doc(id).delete();
+                        window.showAdminToast('<i class="fa-solid fa-trash-can"></i>', 'Producto borrado de la nube.');
+                    } catch (error) {
+                        console.error("Error al borrar", error);
+                    }
                 }
             }
             
             if (editBtn) {
-                const idx = editBtn.getAttribute('data-index');
-                editingIndex = idx;
-                const prod = productos[idx];
+                const id = editBtn.getAttribute('data-id');
+                editingId = id;
+                const prod = productos.find(p => p.id === id);
 
                 document.getElementById('prodName').value = prod.nombre;
                 document.getElementById('prodPrice').value = prod.precio;

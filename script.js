@@ -1,203 +1,197 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Formularios y secciones
+
+    const container = document.getElementById('container');
+    const showRegister = document.getElementById('showRegister');
+    const showLogin = document.getElementById('showLogin');
     const loginSection = document.getElementById('loginSection');
     const registerSection = document.getElementById('registerSection');
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    
-    // Enlaces de navegación
-    const showRegisterLink = document.getElementById('showRegister');
-    const showLoginLink = document.getElementById('showLogin');
-    
-    // Botones
-    const submitBtn = document.getElementById('submitBtn');
-    const regSubmitBtn = document.getElementById('regSubmitBtn');
-    
-    // Notificaciones
+    const togglePasswords = document.querySelectorAll('.toggle-password');
     const notification = document.getElementById('notification');
 
-    // Asegurar que el Admin por defecto siempre exista
-    let currentUsers = JSON.parse(localStorage.getItem('users')) || [];
-    const hasAdmin = currentUsers.some(u => u.email === 'admin');
-    
-    if (!hasAdmin) {
-        currentUsers.unshift({ 
-            name: 'Administrador Principal', 
-            email: 'admin', 
-            password: 'admin123', 
-            role: 'admin', 
-            status: 'active', 
-            lastLogin: 'Nunca' 
-        });
-        localStorage.setItem('users', JSON.stringify(currentUsers));
-    }
-
-    // Cambiar entre Login y Registro
-    showRegisterLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        loginSection.classList.add('hidden');
-        registerSection.classList.remove('hidden');
-    });
-
-    showLoginLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        registerSection.classList.add('hidden');
-        loginSection.classList.remove('hidden');
-    });
-
-    // Toggle password visibility dinámico
-    const togglePasswords = document.querySelectorAll('.toggle-password');
-    togglePasswords.forEach(toggle => {
-        toggle.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-target');
-            const passwordInput = document.getElementById(targetId);
-            
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            
-            this.classList.toggle('fa-eye');
-            this.classList.toggle('fa-eye-slash');
-        });
-    });
-
-    // Función para mostrar notificaciones Toast
-    function showNotification(message, type = 'success') {
+    // Función para mostrar notificaciones
+    const showNotification = (message, type = 'error') => {
         notification.textContent = message;
         notification.className = `notification show ${type}`;
-        
         setTimeout(() => {
             notification.classList.remove('show');
         }, 3000);
+    };
+
+    // Intercambiar vistas
+    showRegister.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginSection.classList.add('hidden');
+        setTimeout(() => {
+            loginSection.style.display = 'none';
+            registerSection.style.display = 'block';
+            setTimeout(() => registerSection.classList.remove('hidden'), 50);
+        }, 300);
+    });
+
+    showLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        registerSection.classList.add('hidden');
+        setTimeout(() => {
+            registerSection.style.display = 'none';
+            loginSection.style.display = 'block';
+            setTimeout(() => loginSection.classList.remove('hidden'), 50);
+        }, 300);
+    });
+
+    // Alternar visibilidad de contraseña
+    togglePasswords.forEach(icon => {
+        icon.addEventListener('click', function () {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.classList.replace('fa-eye-slash', 'fa-eye');
+            } else {
+                input.type = 'password';
+                this.classList.replace('fa-eye', 'fa-eye-slash');
+            }
+        });
+    });
+
+    // Registro Exitoso con Firebase Auth
+    const registerForm = document.getElementById('registerForm');
+    const regSubmitBtn = document.getElementById('regSubmitBtn');
+
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+
+            if (password.length < 6) {
+                showNotification('Firebase exige mínimo 6 caracteres para contraseñas.');
+                return;
+            }
+
+            regSubmitBtn.classList.add('loading');
+
+            try {
+                // 1. Crear usuario en Firebase Auth
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // 2. Guardar datos adicionales (nombre, rol) en Firestore 'users'
+                await db.collection('users').doc(user.uid).set({
+                    uid: user.uid,
+                    name: name,
+                    email: email,
+                    role: 'user', // Por defecto cliente
+                    status: 'active',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showNotification('¡Cuenta creada exitosamente! Redirigiendo...', 'success');
+                
+                // OnAuthStateChanged manejará la redirección
+
+            } catch (error) {
+                console.error(error);
+                if (error.code === 'auth/email-already-in-use') {
+                    showNotification('El correo electrónico ya está registrado.');
+                } else if (error.code === 'auth/weak-password') {
+                     showNotification('La contraseña es demasiado débil (min. 6 caracteres).');
+                } else {
+                    showNotification('Error al crear la cuenta: ' + error.message);
+                }
+            } finally {
+                regSubmitBtn.classList.remove('loading');
+            }
+        });
     }
 
-    // Manejo del Registro
-    registerForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const name = document.getElementById('regName').value;
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
-        
-        if (name && email && password) {
-            regSubmitBtn.classList.add('loading');
-            regSubmitBtn.disabled = true;
-            
-            setTimeout(() => {
-                regSubmitBtn.classList.remove('loading');
-                regSubmitBtn.disabled = false;
-                
-                // Verificar si el usuario ya existe
-                const users = JSON.parse(localStorage.getItem('users')) || [];
-                const userExists = users.some(u => u.email === email);
-                
-                if (userExists) {
-                    showNotification('El correo ya está registrado.', 'error');
-                } else {
-                    // Guardar nuevo usuario
-                    const today = new Date().toLocaleString();
-                    users.push({ name, email, password, role: 'user', status: 'active', lastLogin: 'Nuevo' });
-                    localStorage.setItem('users', JSON.stringify(users));
-                    
-                    showNotification('¡Registro exitoso! Por favor inicia sesión.', 'success');
-                    registerForm.reset();
-                    
-                    // Limpiar clases de animación de label
-                    registerForm.querySelectorAll('.input-group input').forEach(input => {
-                        input.classList.remove('has-val');
-                    });
-                    
-                    // Cambiar a la vista de login automáticamente
-                    setTimeout(() => {
-                        registerSection.classList.add('hidden');
-                        loginSection.classList.remove('hidden');
-                        // Pre-rellenar el email
-                        document.getElementById('email').value = email;
-                        document.getElementById('email').classList.add('has-val');
-                        document.getElementById('password').focus();
-                    }, 1500);
-                }
-            }, 1000); // Simulando conexión a backend
-        }
-    });
+    // Inicio de Sesión con Firebase Auth
+    const loginForm = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('submitBtn');
 
-    // Manejo del Login
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        if (email && password) {
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            let emailInputValue = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
             submitBtn.classList.add('loading');
-            submitBtn.disabled = true;
-            
-            setTimeout(() => {
-                submitBtn.classList.remove('loading');
-                submitBtn.disabled = false;
-                
-                // Obtener usuarios guardados
-                const users = JSON.parse(localStorage.getItem('users')) || [];
-                
-                const user = users.find(u => u.email === email && u.password === password);
-                
-                if (user) {
-                    if (user.status !== 'active') {
-                        showNotification('Tu cuenta está suspendida o inactiva.', 'error');
-                        submitBtn.style.backgroundColor = 'var(--error)';
-                        submitBtn.querySelector('.btn-text').textContent = 'Error';
-                        setTimeout(() => {
-                            submitBtn.style.backgroundColor = '';
-                            submitBtn.querySelector('.btn-text').textContent = 'Iniciar Sesión';
-                        }, 2000);
-                        return;
-                    }
 
-                    // Éxito al iniciar sesión
-                    submitBtn.style.backgroundColor = 'var(--success)';
-                    submitBtn.querySelector('.btn-text').textContent = '¡Ingresando!';
-                    
-                    showNotification(`¡Bienvenido de nuevo, ${user.name}!`, 'success');
-                    
-                    // Update Last Login
-                    user.lastLogin = new Date().toLocaleString();
-                    localStorage.setItem('users', JSON.stringify(users));
-
-                    // Establecer sesión activa
-                    localStorage.setItem('techstore_currentUser', JSON.stringify(user));
-                    
-                    setTimeout(() => {
-                        window.location.href = 'tienda.html';
-                    }, 1500);
-                } else {
-                    // Fallo al iniciar sesión (contraseña incorrecta o usuario no encontrado)
-                    showNotification('Correo o contraseña incorrectos.', 'error');
-                    submitBtn.style.backgroundColor = 'var(--error)';
-                    submitBtn.querySelector('.btn-text').textContent = 'Error';
-                    
-                    setTimeout(() => {
-                        submitBtn.style.backgroundColor = '';
-                        submitBtn.querySelector('.btn-text').textContent = 'Iniciar Sesión';
-                    }, 2000);
+            try {
+                // Easter Egg: Permitir login con la palabra "admin" 
+                // mapeándola a un correo falso para Firebase Auth
+                if (emailInputValue.toLowerCase() === 'admin') {
+                    emailInputValue = 'admin@techstore.com';
                 }
-            }, 1000); // Simulando conexión a backend
-        }
-    });
-    
-    // Manejo de clase 'has-val' para animación de inputs
-    document.addEventListener('focusout', (e) => {
-        if (e.target.tagName === 'INPUT' && e.target.type !== 'submit' && e.target.type !== 'checkbox') {
-            if (e.target.value !== '') {
-                e.target.classList.add('has-val');
-            } else {
-                e.target.classList.remove('has-val');
+
+                // Intentar SignIn normal
+                let userCredential;
+                try {
+                    userCredential = await auth.signInWithEmailAndPassword(emailInputValue, password);
+                } catch(loginErr) {
+                    // Si el admin default no existe en Auth, crearlo auto. (Solo para admin@techstore.com)
+                    if (loginErr.code === 'auth/user-not-found' && emailInputValue === 'admin@techstore.com' && password === 'admin123') {
+                         userCredential = await auth.createUserWithEmailAndPassword(emailInputValue, password);
+                         await db.collection('users').doc(userCredential.user.uid).set({
+                             uid: userCredential.user.uid,
+                             name: "Administrador Principal",
+                             email: emailInputValue,
+                             role: "admin",
+                             status: "active",
+                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                             lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                         });
+                    } else {
+                        throw loginErr; // Re-lanzar si es otro error
+                    }
+                }
+
+                const user = userCredential.user;
+
+                // Verificar estado activo en Firestore antes de dejarlo pasar
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if(userDoc.exists && userDoc.data().status === 'inactive') {
+                    await auth.signOut();
+                    showNotification('Tu cuenta ha sido suspendida. Contacta a soporte.');
+                    submitBtn.classList.remove('loading');
+                    return;
+                }
+
+                // Actualizar último inicio de sesión en BD
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showNotification('¡Bienvenido de vuelta!', 'success');
+                // OnAuthStateChanged manejará la redirección
+
+            } catch (error) {
+                console.error(error);
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    showNotification('Correo o contraseña incorrectos.');
+                } else if(error.code === 'auth/network-request-failed') {
+                    showNotification('Error de red. Revisa tu conexión.');
+                } else {
+                    showNotification('Error de autenticación.');
+                }
+            } finally {
+                submitBtn.classList.remove('loading');
             }
+        });
+    }
+
+    // Redirigir a la tienda si ya hay un usuario logueado en Firebase
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+             // Si el login form existe, estamos en index.html pero logueados -> ir a tienda
+             if(document.getElementById('loginForm')){
+                 window.location.href = 'tienda.html';
+             }
         }
     });
 
-    // Inicializar inputs que puedan tener datos previamente cacheados por el navegador
-    document.querySelectorAll('.input-group input').forEach(input => {
-        if (input.value !== '') {
-            input.classList.add('has-val');
-        }
-    });
+    // Asegurarse de quitar las barreras de autenticación locales para evitar conflictos posteriores
+    localStorage.removeItem('techstore_currentUser');
 });
