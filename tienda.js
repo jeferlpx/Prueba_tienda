@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 1. Autenticación y Visibilidad de UI ---
     const adminLinkBtn = document.getElementById('adminLinkBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    const loggedUserName = document.getElementById('loggedUserName');
     const forcePasswordModal = document.getElementById('forcePasswordModal');
     
     let currentUserData = null; // Almacenará la data cargada desde Firestore (para checar roles)
@@ -18,6 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (docSnap.exists) {
                     currentUserData = docSnap.data();
                     
+                    // Mostrar saludo con su nombre
+                    if (loggedUserName) {
+                        const firstName = currentUserData.name.split(' ')[0];
+                        loggedUserName.innerHTML = `<i class="fa-solid fa-user-circle" style="margin-right:5px;"></i>Hola, ${firstName}`;
+                        loggedUserName.style.display = 'inline-block';
+                    }
+
                     // ¿Es Admin? Mostrar botón admin
                     if (currentUserData.role === 'admin' && adminLinkBtn) {
                         adminLinkBtn.style.display = 'inline-block';
