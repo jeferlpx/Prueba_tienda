@@ -20,8 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentUserData = docSnap.data();
                     
                     // Mostrar saludo con su nombre
-                    if (loggedUserName) {
-                        const firstName = currentUserData.name.split(' ')[0];
+                    if (loggedUserName && currentUserData) {
+                        const fullName = currentUserData.name || 'Usuario';
+                        const firstName = fullName.split(' ')[0];
                         loggedUserName.innerHTML = `<i class="fa-solid fa-user-circle" style="margin-right:5px;"></i>Hola, ${firstName}`;
                         loggedUserName.style.display = 'inline-block';
                     }
